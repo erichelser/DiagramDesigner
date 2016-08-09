@@ -1,0 +1,1 @@
+java -jar ecj322.jar -classpath . -sourcepath . -d . -source 5.0 World.java && java -cp . World

@@ -1,6 +1,8 @@
+package DiagramDesigner;
+
 import javax.swing.*;
 
-class OptionsMenu extends JPanel
+public class OptionsMenu extends JPanel
 {
 	protected OptionsMenu()
 	{

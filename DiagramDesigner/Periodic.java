@@ -1,4 +1,6 @@
-class Periodic implements Runnable
+package DiagramDesigner;
+
+public class Periodic implements Runnable
 {
 	private boolean running;
 	private double frequency;

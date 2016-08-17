@@ -1,3 +1,5 @@
+package DiagramDesigner;
+
 import java.awt.*;
 import java.awt.Graphics2D;
 import java.awt.event.*;
@@ -5,9 +7,9 @@ import java.awt.geom.*;
 
 class Link extends Tangible
 {
-	DraggableBox pointA;
-	DraggableBox pointB;
-	int thickness;
+	private DraggableBox pointA;
+	private DraggableBox pointB;
+	private int thickness;
 	public Link()
 	{
 		super();

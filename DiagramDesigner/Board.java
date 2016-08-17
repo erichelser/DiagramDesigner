@@ -1,3 +1,5 @@
+package DiagramDesigner;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -8,8 +10,8 @@ import java.util.*;
 //whichever on-screen object is clicked.
 //Also provides methods for translating internal "position" to
 //actual pixels so each individual object can draw itself.
-class Board extends JPanel implements Runnable, MouseListener, ActionListener, MouseMotionListener,
-                                      MouseWheelListener
+public class Board extends JPanel implements Runnable, MouseListener, ActionListener, MouseMotionListener,
+                                      MouseWheelListener, Command
 {
 	//Visual environment parameters
 	private OrderedPair pixelDim;
@@ -29,15 +31,15 @@ class Board extends JPanel implements Runnable, MouseListener, ActionListener, M
 	private Tangible clickedTangible;
 
 	private Periodic periodic;
-	public class Repainter implements Command
-	{ public void execute() { summonRepaint(); } }
 
 	//private JPanel optionsMenu;
 	//private JPanel backgroundOM;
 	private OptionsMenu activeOptionsMenu;
 	private BackgroundOptionsMenu myBackgroundOptionsMenu;
 
-	private GameWindow containingGameWindow;
+	private ArrayList<MenuButton> menuButtons;
+
+	private DDWindow containingWindow;
 
 	public Board()
 	{
@@ -55,6 +57,8 @@ class Board extends JPanel implements Runnable, MouseListener, ActionListener, M
 		//Initialize tangibles container
 		tangibles = new ArrayList<Tangible>(0);
 
+		menuButtons=new ArrayList<MenuButton>(0);
+
 		myBackgroundOptionsMenu = new BackgroundOptionsMenu();
 
 		setOptionsMenu(myBackgroundOptionsMenu);
@@ -66,9 +70,9 @@ class Board extends JPanel implements Runnable, MouseListener, ActionListener, M
 		setPixelDim(xDim, yDim);
 	}
 
-	public void setGameWindow(GameWindow gw)
+	public void setGameWindow(DDWindow gw)
 	{
-		containingGameWindow = gw;
+		containingWindow = gw;
 	}
 
 	public void run()
@@ -78,12 +82,17 @@ class Board extends JPanel implements Runnable, MouseListener, ActionListener, M
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
 
-		periodic = new Periodic(60, new Repainter());
+		periodic = new Periodic(60, this);
 		periodic.start();
 
 		//Initialize graphics parameters...
 		pixelDim = new OrderedPair(this.getWidth(), this.getHeight());
 		posCenter = new OrderedPair(this.getWidth() / 2, this.getHeight() / 2);
+	}
+
+	public void execute()
+	{
+		summonRepaint();
 	}
 
 	public void addTangible(Tangible t)
@@ -96,6 +105,16 @@ class Board extends JPanel implements Runnable, MouseListener, ActionListener, M
 			for (int i = 0; i < list.size(); i++)
 				addTangible(list.get(i)); //recursive add
 		}
+	}
+
+	public void addMenuButton(MenuButton mb)
+	{
+		menuButtons.add(mb);
+		mb.setParentBoard(this);
+	}
+	public ArrayList<MenuButton> getMenuButtons()
+	{
+		return menuButtons;
 	}
 
 	public OrderedPair pixelToPos(OrderedPair pixel)
@@ -141,7 +160,7 @@ class Board extends JPanel implements Runnable, MouseListener, ActionListener, M
 			if (tangibles.get(i).isClicked(e))
 			{
 				setOptionsMenu(tangibles.get(i).getOptionsMenu());
-				return tangibles.get(i);
+				return tangibles.get(i).getClickedComponent(e);
 			}
 		}
 		setOptionsMenu(myBackgroundOptionsMenu);
@@ -192,8 +211,10 @@ class Board extends JPanel implements Runnable, MouseListener, ActionListener, M
 		{
 			if (tangibles.get(i).isClicked(e))
 			{
+				//System.out.println(e);
+				//System.out.println(tangibles.get(i));
 				tangibles.get(i).onClickAction(e);
-				objectFound = true;
+				//objectFound = true;
 			}
 		}
 		repaint();
@@ -277,13 +298,17 @@ class Board extends JPanel implements Runnable, MouseListener, ActionListener, M
 	public void setOptionsMenu(OptionsMenu o)
 	{
 		activeOptionsMenu = o;
-		if (containingGameWindow != null)
-			containingGameWindow.alertOptionsMenuChanged();
+		if (containingWindow != null)
+			containingWindow.alertOptionsMenuChanged();
 	}
 
 	public OptionsMenu getOptionsMenu()
 	{
 		return activeOptionsMenu;
+	}
+	public BackgroundOptionsMenu getBackgroundOptionsMenu()
+	{
+		return myBackgroundOptionsMenu;
 	}
 	private static final long serialVersionUID=0;
 }

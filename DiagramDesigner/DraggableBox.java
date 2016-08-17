@@ -1,4 +1,6 @@
-abstract class DraggableBox extends ClickableBox
+package DiagramDesigner;
+
+public abstract class DraggableBox extends ClickableBox
 {
 	private OrderedPair delta; //temporary variables for when it's being dragged, in pixels
 	private Bucket parentContainer;
@@ -12,7 +14,10 @@ abstract class DraggableBox extends ClickableBox
 
 	public void setPixelDelta(OrderedPair d)
 	{
-		delta.set(d);
+		if(parentContainer!=null)
+			parentContainer.setPixelDelta(d);
+		else
+			delta.set(d);
 	}
 	public OrderedPair getPixelDelta()
 	{
@@ -32,7 +37,12 @@ abstract class DraggableBox extends ClickableBox
 	}
 	public void applyPixelDelta()
 	{
-		getPosition().add(getPixelDelta().multiply(1 / getBoard().getZoomFactor()));
-		delta.setZero();
+		if (parentContainer != null)
+			parentContainer.applyPixelDelta();
+		else
+		{
+			getPosition().add(getPixelDelta().multiply(1 / getBoard().getZoomFactor()));
+			delta.setZero();
+		}
 	}
 }

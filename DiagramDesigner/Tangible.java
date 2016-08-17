@@ -1,9 +1,11 @@
+package DiagramDesigner;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 
-abstract class Tangible
+public abstract class Tangible
 {
 	private Board board;
 	protected OptionsMenu optionsMenu;
@@ -46,5 +48,9 @@ abstract class Tangible
 		board = b;
 	}
 	public Board getBoard() { return board; }
+	public Tangible getClickedComponent(MouseEvent e)
+	{
+		return this;
+	}
 }
 

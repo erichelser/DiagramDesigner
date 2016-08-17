@@ -1,6 +1,8 @@
+package DiagramDesigner;
+
 import java.awt.event.*;
 
-abstract class ClickableBox extends Tangible
+public abstract class ClickableBox extends Tangible
 {
 	private OrderedPair size;
 	private OrderedPair position; //of upper left corner
@@ -16,13 +18,14 @@ abstract class ClickableBox extends Tangible
 	{
 		OrderedPair boardPos = getBoard().pixelToPos(new OrderedPair(e.getX(), e.getY()));
 		boardPos.subtract(getPosition());
-		return (0 <= boardPos.getX() && boardPos.getX() <= getSize().getX()
-			 && 0 <= boardPos.getY() && boardPos.getY() <= getSize().getY());
+		return (0 <= boardPos.getX() && boardPos.getX() < getSize().getX()
+			 && 0 <= boardPos.getY() && boardPos.getY() < getSize().getY());
 	}
 
 	public void setSize(OrderedPair s) { size.set(s); }
 	public OrderedPair getSize() { return size; }
 
+	public void setPosition(double x, double y) { setPosition(new OrderedPair(x,y)); }
 	public void setPosition(OrderedPair p) { position.set(p); }
 	public OrderedPair getPosition() { return position; }
 

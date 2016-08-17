@@ -1,22 +1,18 @@
+package DiagramDesigner;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 
-class Bucket extends DraggableBox
+public class Bucket extends DraggableBox
 {
 	private ArrayList<DraggableBox> items;
 	private ArrayList<Anchor> leftAnchors;
 	private ArrayList<Anchor> rightAnchors;
 
-	public static Bucket createFromImageBox(String imgFile, int posX, int posY, int leftAnchors, int rightAnchors)
+	public Bucket()
 	{
-		Bucket item=new Bucket(posX, posY);
-		item.addItem(new ImageBox(imgFile));
-		for(int i=0; i<leftAnchors; i++)
-			item.addLeftAnchor();
-		for(int i=0; i<rightAnchors; i++)
-			item.addRightAnchor();
-		return item;
+		this(0,0);
 	}
 
 	private Bucket(int x, int y)
@@ -27,6 +23,29 @@ class Bucket extends DraggableBox
 		items = new ArrayList<DraggableBox>(0);
 		leftAnchors = new ArrayList<Anchor>(0);
 		rightAnchors=new ArrayList<Anchor>(0);
+	}
+
+	public static Bucket createFromImageBox(String imgFile, int posX, int posY, int leftAnchors, int rightAnchors)
+	{
+		Bucket item=new Bucket(posX, posY);
+		item.addItem(new ImageBox(imgFile));
+		item.createAnchors(leftAnchors,rightAnchors);
+		return item;
+	}
+	public static void link(Bucket bucket1, int index1, Bucket bucket2, int index2)
+	{
+		Anchor anchor1=bucket1.getRightAnchor(index1);
+		Anchor anchor2=bucket2.getLeftAnchor(index2);
+		if(anchor1!=null && anchor2!=null)
+		{
+			Link L=new Link(anchor1,anchor2);
+			anchor1.setLink(L);
+			anchor2.setLink(L);
+		}
+	}
+	public void addImage(String s)
+	{
+		addItem(new ImageBox(s));
 	}
 	public void addItem(DraggableBox b)
 	{
@@ -56,8 +75,8 @@ class Bucket extends DraggableBox
 	public void applyPixelDelta()
 	{
 		super.applyPixelDelta();
-		for (int i = 0; i < items.size(); i++)
-			items.get(i).applyPixelDelta();
+		//for (int i = 0; i < items.size(); i++)
+		//	items.get(i).applyPixelDelta();
 		for (int i = 0; i < leftAnchors.size(); i++)
 			leftAnchors.get(i).applyPixelDelta();
 		for (int i = 0; i < rightAnchors.size(); i++)
@@ -70,6 +89,14 @@ class Bucket extends DraggableBox
 		Link L=new Link(anchor1,anchor2);
 		anchor1.setLink(L);
 		anchor2.setLink(L);
+	}
+
+	public void createAnchors(int l, int r)
+	{
+		for(int i=0; i<l; i++)
+			this.addLeftAnchor();
+		for(int i=0; i<r; i++)
+			this.addRightAnchor();
 	}
 
 	public void addLeftAnchor()
@@ -108,8 +135,18 @@ class Bucket extends DraggableBox
 	public boolean isLeftAnchor(Anchor a) { return leftAnchors.contains(a); }
 	public boolean isRightAnchor(Anchor a) { return rightAnchors.contains(a); }
 
-	public Anchor getLeftAnchor(int i){	return leftAnchors.get(i);}
-	public Anchor getRightAnchor(int i){ return rightAnchors.get(i);}
+	public Anchor getLeftAnchor(int i)
+	{
+		if(i<leftAnchors.size())
+			return leftAnchors.get(i);
+		return null;
+	}
+	public Anchor getRightAnchor(int i)
+	{
+		if(i<rightAnchors.size())
+			return rightAnchors.get(i);
+		return null;
+	}
 
 	public double calculateFractionalPosition(Anchor a)
 	{
@@ -130,7 +167,11 @@ class Bucket extends DraggableBox
 			rightAnchors.get(i).zoomNotify();
 	}
 
-	public void onClickAction(MouseEvent e) { }
+	public void onClickAction(MouseEvent e)
+	{
+		for (int i = 0; i < items.size(); i++)
+			items.get(i).onClickAction(e);
+	}
 
 	public ArrayList<? extends Tangible> getTangibleChildren()
 	{
@@ -140,5 +181,13 @@ class Bucket extends DraggableBox
 		for(int i=0; i<rightAnchors.size(); i++)
 			ret.add(rightAnchors.get(i));
 		return ret;
+	}
+
+	public Tangible getClickedComponent(MouseEvent e)
+	{
+		for (int i = 0; i < items.size(); i++)
+			if (items.get(i).isClicked(e))
+				return items.get(i).getClickedComponent(e);
+		return this;
 	}
 }

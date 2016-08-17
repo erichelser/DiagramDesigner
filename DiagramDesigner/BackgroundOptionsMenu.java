@@ -1,3 +1,5 @@
+package DiagramDesigner;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -67,6 +69,12 @@ class BackgroundOptionsMenu extends OptionsMenu
 		int g = ((Integer)colorGModel.getValue()).intValue();
 		int b = ((Integer)colorBModel.getValue()).intValue();
 		return new Color(r, g, b);
+	}
+	public void setColor(int r, int g, int b)
+	{
+		colorRModel.setValue(r);
+		colorGModel.setValue(g);
+		colorBModel.setValue(b);
 	}
 	private static final long serialVersionUID=0;
 }

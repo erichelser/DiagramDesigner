@@ -1,4 +1,6 @@
-class OrderedPair
+package DiagramDesigner;
+
+public class OrderedPair
 {
 	private double X;
 	private double Y;

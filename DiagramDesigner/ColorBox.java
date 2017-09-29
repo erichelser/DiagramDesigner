@@ -9,7 +9,6 @@ import java.awt.geom.*;
 import java.awt.RenderingHints.*;
 import java.io.*;
 import javax.imageio.*;
-import java.util.*;
 
 class ColorBox extends DraggableBox
 {

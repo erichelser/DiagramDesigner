@@ -10,8 +10,13 @@ import java.util.*;
 //whichever on-screen object is clicked.
 //Also provides methods for translating internal "position" to
 //actual pixels so each individual object can draw itself.
-public class Board extends JPanel implements Runnable, MouseListener, ActionListener, MouseMotionListener,
-                                      MouseWheelListener, Command
+public class Board extends JPanel implements Runnable,
+                                             MouseListener, 
+                                             ActionListener, 
+                                             MouseMotionListener,
+                                             MouseWheelListener,
+                                             Command,
+                                             KeyListener
 {
 	//Visual environment parameters
 	private OrderedPair pixelDim;
@@ -41,7 +46,13 @@ public class Board extends JPanel implements Runnable, MouseListener, ActionList
 
 	private DDWindow containingWindow;
 
-	public Board()
+	private int gridDimension;
+		//Draw an alignment grid in the background.
+		//value<=0 means no grid
+		//value>0 means draw a line every {value} position units
+		//        and a red circle for (0,0)
+
+	private Board()
 	{
 		pixelDim = new OrderedPair();
 		posCenter = new OrderedPair();
@@ -62,25 +73,30 @@ public class Board extends JPanel implements Runnable, MouseListener, ActionList
 		myBackgroundOptionsMenu = new BackgroundOptionsMenu();
 
 		setOptionsMenu(myBackgroundOptionsMenu);
+
+		gridDimension=0;
 	}
 
 	public Board(int xDim, int yDim)
 	{
 		this();
 		setPixelDim(xDim, yDim);
+		new DDWindow(this);
 	}
 
-	public void setGameWindow(DDWindow gw)
+	public void setContainingWindow(DDWindow gw)
 	{
 		containingWindow = gw;
 	}
 
 	public void run()
 	{
+		setFocusable(true);
 		setVisible(true);
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
+		addKeyListener(this);
 
 		periodic = new Periodic(60, this);
 		periodic.start();
@@ -100,7 +116,8 @@ public class Board extends JPanel implements Runnable, MouseListener, ActionList
 		if(t!=null)
 		{
 			t.setBoard(this);
-			tangibles.add(t);
+			if(!tangibles.contains(t))
+				tangibles.add(t);
 			ArrayList<? extends Tangible> list = t.getTangibleChildren();
 			for (int i = 0; i < list.size(); i++)
 				addTangible(list.get(i)); //recursive add
@@ -111,6 +128,7 @@ public class Board extends JPanel implements Runnable, MouseListener, ActionList
 	{
 		menuButtons.add(mb);
 		mb.setParentBoard(this);
+		containingWindow.refreshMenuButtons(this);
 	}
 	public ArrayList<MenuButton> getMenuButtons()
 	{
@@ -139,6 +157,11 @@ public class Board extends JPanel implements Runnable, MouseListener, ActionList
 		return pixel;
 	}
 
+	public void showGrid(int v)
+	{
+		gridDimension=v;
+	}
+
 	public double getZoomFactor() { return zoomFactor; }
 
 	public void paintComponent(Graphics g)
@@ -146,6 +169,35 @@ public class Board extends JPanel implements Runnable, MouseListener, ActionList
 		//Fill background color in
 		g.setColor(myBackgroundOptionsMenu.getColor());
 		g.fillRect(0,0,pixelDim.getXInt(),pixelDim.getYInt());
+
+		//TODO: g.setColor(myBackgroundOptionsMenu.getGridColor());
+		g.setColor(new Color(128,128,128));
+		if(gridDimension>0)
+		{
+			OrderedPair origin=posToPixel(new OrderedPair(0,0));
+			double delta=gridDimension * getZoomFactor();
+
+			OrderedPair SECorner=new OrderedPair(pixelDim);
+			SECorner.subtract(origin);
+			SECorner.multiply(1.0/delta);
+			SECorner.truncateFraction();
+			SECorner.multiply(delta);
+			SECorner.add(origin);
+
+			int horiz, verti;
+			do
+			{
+				horiz=(SECorner).getYInt();
+				verti=(SECorner).getXInt();			
+				g.drawLine(    0,horiz,pixelDim.getXInt(),             horiz);
+				g.drawLine(verti,    0,             verti,pixelDim.getYInt());
+				SECorner.subtract(new OrderedPair(delta,delta));
+			}while(horiz>0 || verti>0);
+
+			g.setColor(new Color(255,0,0));
+			for(int i=3; i<=5; i++)
+				g.drawRect(origin.getXInt()-i, origin.getYInt()-i, 2*i, 2*i);
+		}
 
 		//Draw each Tangible object from background to foreground
 		for(int i=0; i<tangibles.size(); i++)
@@ -169,12 +221,15 @@ public class Board extends JPanel implements Runnable, MouseListener, ActionList
 
 	public void mousePressed(MouseEvent e)
 	{
-		clickedTangible = getClickedTangible(e);
+		requestFocusInWindow(); //For acquiring keyboard input
+		setClickedTangible(e,getClickedTangible(e));
+	}
+
+	public void setClickedTangible(MouseEvent e, Tangible t)
+	{
+		clickedTangible=t;
 		mouseDown = true;
 		pixelMouseDownAt.set(getMouseOrderedPairPixel(e));
-
-		//System.out.println(e);
-		//System.out.println(clickedTangible);
 	}
 
 	public void mouseReleased(MouseEvent e)
@@ -246,6 +301,8 @@ public class Board extends JPanel implements Runnable, MouseListener, ActionList
 			clickedTangible.setPixelDelta(new OrderedPair());
 		}
 
+		OrderedPair mouseLoc = getMouseOrderedPairPos(e);
+
 		double oldZoomFactor = zoomFactor;
 		if (e.getWheelRotation() < 0)
 		{
@@ -258,10 +315,9 @@ public class Board extends JPanel implements Runnable, MouseListener, ActionList
 		if (zoomFactor < 0.1) zoomFactor = 0.1;
 		if (zoomFactor > 9.9) zoomFactor = 9.9;
 
-		OrderedPair mousePos = getMouseOrderedPairPos(e);
-		posCenter.subtract(mousePos);
+		posCenter.subtract(mouseLoc);
 		posCenter.multiply(oldZoomFactor / zoomFactor);
-		posCenter.add(mousePos);
+		posCenter.add(mouseLoc);
 
 		for (int i = tangibles.size() - 1; i >= 0; i--)
 		{
@@ -287,7 +343,7 @@ public class Board extends JPanel implements Runnable, MouseListener, ActionList
 	{
 		OrderedPair centerDiff = new OrderedPair(xDim, yDim);
 		centerDiff.subtract(pixelDim);
-		centerDiff.multiply(0.5);
+		centerDiff.multiply(0.5/zoomFactor);
 		posCenter.add(centerDiff);
 
 		pixelDim.setX(xDim);
@@ -310,5 +366,19 @@ public class Board extends JPanel implements Runnable, MouseListener, ActionList
 	{
 		return myBackgroundOptionsMenu;
 	}
+
+	public void keyTyped(KeyEvent e)
+	{
+		System.out.println("Key Typed: "+e);
+	}
+	public void keyPressed(KeyEvent e)
+	{
+		//System.out.println("Key Pressed: "+e);
+	}
+	public void keyReleased(KeyEvent e)
+	{
+		//System.out.println("Key Released: "+e);	
+	}
+
 	private static final long serialVersionUID=0;
 }

@@ -3,6 +3,7 @@ package DiagramDesigner;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 
 //Window-based container for Board
 //Sets initial size of screen and starts up Board thread.
@@ -10,24 +11,20 @@ public class DDWindow implements ComponentListener, ActionListener
 {
 	private Board myBoard;
 	private JPanel windowNorth;
+	private ArrayList<MenuButton> windowNorthButtons;
 	private JPanel windowEast;
 	private JFrame window;
 	private JPanel container;
 	public DDWindow(Board paramBoard)
 	{
 		myBoard = paramBoard;
-		myBoard.setGameWindow(this);
-		window = new JFrame("Main Window");
+		myBoard.setContainingWindow(this);
+		window = new JFrame("Main Window2");
 
 		FlowLayout myFL = new FlowLayout();
 		myFL.setAlignment(FlowLayout.LEFT);
 		windowNorth = new JPanel(myFL);
-
-		for(MenuButton mb:myBoard.getMenuButtons())
-		{
-			windowNorth.add(mb);
-			mb.addActionListener(this);
-		}
+		windowNorthButtons=new ArrayList<MenuButton>();
 
 		windowEast = myBoard.getOptionsMenu();
 
@@ -64,6 +61,8 @@ public class DDWindow implements ComponentListener, ActionListener
 		(new Thread(myBoard)).start();
 
 		window.addComponentListener(this);
+
+		this.refreshMenuButtons(myBoard);
 	}
 
 	public void componentHidden(ComponentEvent e) { }
@@ -97,5 +96,22 @@ public class DDWindow implements ComponentListener, ActionListener
 		window.pack();
 		myBoard.setPixelDim(myBoard.getSize().width, myBoard.getSize().height);
 		window.repaint();
+	}
+	
+	public void refreshMenuButtons(Board b)
+	{
+		for(MenuButton mb:windowNorthButtons)
+		{
+			windowNorth.remove(mb);
+			mb.removeActionListener(this);
+		}
+		windowNorthButtons.clear();
+		
+		for(MenuButton mb:b.getMenuButtons())
+		{
+			windowNorth.add(mb);
+			windowNorthButtons.add(mb);
+			mb.addActionListener(this);
+		}
 	}
 }

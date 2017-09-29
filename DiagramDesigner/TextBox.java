@@ -1,17 +1,12 @@
 package DiagramDesigner;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.Graphics2D;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.awt.geom.*;
-import java.awt.RenderingHints.*;
-import java.io.*;
-import javax.imageio.*;
-import java.util.*;
 
-class TextBox extends DraggableBox
+public class TextBox extends DraggableBox
 {
 	private TextImage textImage;
 	private TextBox()

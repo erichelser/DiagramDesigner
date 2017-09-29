@@ -62,6 +62,11 @@ public class OrderedPair
 	{
 		return new OrderedPair(X / 2, Y / 2);
 	}
+	public void truncateFraction()
+	{
+		X=(int)X;
+		Y=(int)Y;
+	}
 
 	public String toString()
 	{

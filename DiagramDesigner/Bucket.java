@@ -6,16 +6,19 @@ import java.util.*;
 
 public class Bucket extends DraggableBox
 {
-	private ArrayList<DraggableBox> items;
-	private ArrayList<Anchor> leftAnchors;
-	private ArrayList<Anchor> rightAnchors;
+	protected ArrayList<DraggableBox> items;
+	protected ArrayList<Anchor> leftAnchors;
+	protected ArrayList<Anchor> rightAnchors;
+	protected Color fillColor;
+	private static final Color BLACK=new Color(0,0,0);
 
 	public Bucket()
 	{
 		this(0,0);
+		fillColor=BLACK;
 	}
 
-	private Bucket(int x, int y)
+	protected Bucket(int x, int y)
 	{
 		super();
 		setSize(new OrderedPair(0, 0));
@@ -23,6 +26,11 @@ public class Bucket extends DraggableBox
 		items = new ArrayList<DraggableBox>(0);
 		leftAnchors = new ArrayList<Anchor>(0);
 		rightAnchors=new ArrayList<Anchor>(0);
+	}
+
+	protected void setFillColor(Color x)
+	{
+		fillColor=x;
 	}
 
 	public static Bucket createFromImageBox(String imgFile, int posX, int posY, int leftAnchors, int rightAnchors)
@@ -42,6 +50,10 @@ public class Bucket extends DraggableBox
 			anchor1.setLink(L);
 			anchor2.setLink(L);
 		}
+	}
+	protected void clearItems()
+	{
+		items.clear();
 	}
 	public void addImage(String s)
 	{

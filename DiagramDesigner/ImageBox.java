@@ -8,7 +8,7 @@ import java.awt.geom.*;
 import java.io.*;
 import javax.imageio.*;
 
-class ImageBox extends DraggableBox
+public class ImageBox extends DraggableBox
 {
 	private BufferedImage img;
 	private BufferedImage rotatedImg;
@@ -19,30 +19,50 @@ class ImageBox extends DraggableBox
 	private OrderedPair pixelDrawLocation; //the pixel coords of the UL corner of the normal rectangle that encloses the rotated shape
 
 	private boolean rotateOnClick;
+	private boolean axisIsPosition;
 
 	private double angleDegrees;
-	public ImageBox(String imgFile)
+	public ImageBox()
 	{
-		this(0, 0, imgFile);
+		super();
+		positionOffset = new OrderedPair();
+		axisPoint=new OrderedPair();
+		angleDegrees = 0;
+		imgCorner = new OrderedPair();
+		pixelDrawLocation = new OrderedPair();
+		rotateOnClick = false;
+		axisIsPosition=false;
 	}
 	public ImageBox(int x, int y, String imgFile)
 	{
-		super();
-
-		positionOffset = new OrderedPair(0, 0);
+		this();
 		img = null;
 		try { img = ImageIO.read(new File(imgFile)); }
 		catch (IOException e) { System.out.println(e); }
 		setAxisAtRatio(0.5, 0.5);
-		angleDegrees = 0;
-		imgCorner = new OrderedPair();
-		pixelDrawLocation = new OrderedPair();
 
 		setPosition(new OrderedPair(x, y));
 		setSize(new OrderedPair(img.getWidth(), img.getHeight()));
-
-		rotateOnClick = false;
 	}
+	public ImageBox(String imgFile)
+	{
+		this(0, 0, imgFile);
+	}
+
+	public void setBufferedImage(BufferedImage i)
+	{
+		img=i;
+		setSize(new OrderedPair(img.getWidth(), img.getHeight()));
+	}
+
+	public BufferedImage getBufferedImage() { return img; }
+	public BufferedImage getRotatedImage()
+	{
+		if (rotatedImg == null)
+			updateRotatedImage();
+		return rotatedImg;
+	}
+
 	public void setRotateOnClick(boolean x) { rotateOnClick = x; }
 	public void setAxisAtPixel(double x, double y)
 	{
@@ -52,6 +72,18 @@ class ImageBox extends DraggableBox
 	{
 		axisPoint = new OrderedPair(img.getWidth() * x, img.getHeight() * y);
 	}
+
+	public void setAxisAsPosition()
+	//When enabled, this image will be rendered such that the "position" defined
+	//ALWAYS corresponds to the axis point.
+	//
+	//If axisIsPosition is false, then the upper-left corner will be placed at
+	//the designated position, and THEN the image will be rotated around the
+	//designated axis.
+	{
+		axisIsPosition=true;
+	}
+
 	public OrderedPair getCenterPosition()
 	{
 		return getPosition().replicate().add(axisPoint);
@@ -71,8 +103,10 @@ class ImageBox extends DraggableBox
 	{
 		updateRotatedImage();
 	}
-	
-	private void updateRotatedImage()
+	public double getAngle() { return angleDegrees; }
+	public void setAngle(double x) { angleDegrees=x; }
+
+	public void updateRotatedImage()
 	{
 		double theta = Math.toRadians(angleDegrees); //angle of rotation of object
 		double sinTheta = Math.sin(theta);
@@ -82,7 +116,7 @@ class ImageBox extends DraggableBox
 
 		//dimensions of the rotated image w.r.t. our current/standard axes
 		OrderedPair newSize = new OrderedPair(getSize().getX() * absCosTheta + getSize().getY() * absSinTheta,
-											   getSize().getY() * absCosTheta + getSize().getX() * absSinTheta);
+		                                      getSize().getY() * absCosTheta + getSize().getX() * absSinTheta);
 
 		//assuming that the rotated image's North and West boundaries coincide with its original
 		//boundaries, determine the location of the rotated image's top left corner w.r.t. its original position
@@ -107,8 +141,8 @@ class ImageBox extends DraggableBox
 
 		//draw rotated image to semi-transparent rotatedImg object
 		rotatedImg = new BufferedImage((int)(Math.round(newSize.getX() * getBoard().getZoomFactor())),
-									   (int)(Math.round(newSize.getY() * getBoard().getZoomFactor())),
-									   BufferedImage.TYPE_INT_ARGB);
+		                               (int)(Math.round(newSize.getY() * getBoard().getZoomFactor())),
+		                               BufferedImage.TYPE_INT_ARGB);
 
 		Graphics2D g2d = rotatedImg.createGraphics();
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -139,15 +173,34 @@ class ImageBox extends DraggableBox
 		if (rotatedImg == null)
 			updateRotatedImage();
 
-		pixelDrawLocation = new OrderedPair(getPosition());
-		pixelDrawLocation.subtract(positionOffset);
-		pixelDrawLocation = getBoard().posToPixel(pixelDrawLocation);
-		pixelDrawLocation.add(getPixelDelta());
+		pixelDrawLocation = getDrawPosition();
 
 		////"Helper" rectangle to define the outer boundary of the rotated image
 		//g.setColor(new Color(0, 0, 0));
 		//g.drawRect(pixelDrawLocation.getXInt(), pixelDrawLocation.getYInt(), rotatedImg.getWidth(), rotatedImg.getHeight());
 
 		g.drawImage(rotatedImg, pixelDrawLocation.getXInt(), pixelDrawLocation.getYInt(), null);
+	}
+	
+	//Coordinates of upper-left corner of actual, rotated image
+	public OrderedPair getDrawPosition()
+	{
+		OrderedPair pixelDrawLocation;
+		pixelDrawLocation = new OrderedPair(getPosition());
+		pixelDrawLocation.subtract(positionOffset);
+		pixelDrawLocation = getBoard().posToPixel(pixelDrawLocation);
+		pixelDrawLocation.add(getPixelDelta());
+
+		if(axisIsPosition)
+			pixelDrawLocation.subtract(axisPoint);
+
+		return pixelDrawLocation;
+	}
+	public OrderedPair getDrawSize()
+	{
+		if (rotatedImg == null)
+			updateRotatedImage();
+
+		return new OrderedPair(rotatedImg.getWidth(),rotatedImg.getHeight());
 	}
 }

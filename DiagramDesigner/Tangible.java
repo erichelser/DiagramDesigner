@@ -47,10 +47,19 @@ public abstract class Tangible
 	{
 		board = b;
 	}
+	public void placeOnBoard(Board b)
+	{
+		setBoard(b);
+		b.addTangible(this);
+	}
 	public Board getBoard() { return board; }
 	public Tangible getClickedComponent(MouseEvent e)
 	{
 		return this;
+	}
+	public void setBoardClickedTangible(MouseEvent e, Tangible t)
+	{
+		board.setClickedTangible(e,t);
 	}
 }
 

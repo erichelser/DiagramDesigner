@@ -10,21 +10,18 @@ class Anchor extends DraggableBox
 	private final static int DIM = 6;//width of anchor box
 	private Link link;
 	private Bucket parent;    // separate just in case there are multiple anchors
-	//private DraggableBox alignment; // associated with various children of a container
 
-	public Anchor(Bucket _parent)
+	private Anchor()
 	{
 		super();
 		link = null;
-		setSize (new OrderedPair(DIM, DIM));
-		setParent(_parent);
-		//alignment=_alignment;
+		setSize(new OrderedPair(DIM, DIM));
 	}
-	/*public Anchor(DraggableBox _parent, DraggableBox _alignment)
+	public Anchor(Bucket _parent)
 	{
-		this(_alignment);
+		this();
 		setParent(_parent);
-	}*/
+	}
 
 	public void setParent(Bucket _parent)
 	{
@@ -38,25 +35,23 @@ class Anchor extends DraggableBox
 
 	public void drawMe(Graphics g)
 	{
-		if(parent!=null)
-		{
-			g.setColor(new Color(0, 0, 0));
-			OrderedPair pixel = getBoard().posToPixel(this.getPosition());
-			
-			Graphics2D g2 = (Graphics2D)g;
-			g2.setStroke(new BasicStroke(1));
+		
+		g.setColor(new Color(0, 0, 0));
+		OrderedPair pixel = getBoard().posToPixel(this.getPosition());
+		
+		Graphics2D g2 = (Graphics2D)g;
+		g2.setStroke(new BasicStroke(1));
 
-			g.drawRect((int)(pixel.getX() + parent.getPixelDelta().getX()),
-					   (int)(pixel.getY() + parent.getPixelDelta().getY()),
-					   (int)(Math.round(getSize().getX() * getBoard().getZoomFactor())),
-					   (int)(Math.round(getSize().getY() * getBoard().getZoomFactor())));
-		}
+		g.drawRect((int)(pixel.getX() + getPixelDelta().getX()),
+			   (int)(pixel.getY() + getPixelDelta().getY()),
+			   (int)(Math.round(getSize().getX() * getBoard().getZoomFactor())),
+			   (int)(Math.round(getSize().getY() * getBoard().getZoomFactor())));
 	}
 
 	public ArrayList<? extends Tangible> getTangibleChildren()
 	{
 		ArrayList<Link> ret=new ArrayList<Link>(0);
-			ret.add(link);
+		ret.add(link);
 		return ret;
 	}
 
@@ -80,6 +75,11 @@ class Anchor extends DraggableBox
 		return ret;
 	}
 
+	public OrderedPair getCenterPosition()
+	{
+		return this.getPosition().add(new OrderedPair(DIM/2,DIM/2));
+	}
+
 	//Pixel delta is derived from parent object
 	public OrderedPair getPixelDelta() { return parent.getPixelDelta(); }
 	public void setPixelDelta(OrderedPair d) { }
@@ -87,6 +87,15 @@ class Anchor extends DraggableBox
 
 
 	public void zoomNotify() { }
-	public void onClickAction(MouseEvent e) { }
+	public void onClickAction(MouseEvent e)
+	{
+		System.out.println(e);
+		if(link==null)
+		{
+			Anchor endpoint=new Anchor();
+			link=new Link(this,endpoint);
+			setBoardClickedTangible(e,endpoint);
+		}
+	}
 }
 
